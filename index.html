@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gun 2a/2b</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#eaeded}
+
+header{
+background:#131921;
+color:white;
+display:flex;
+gap:10px;
+padding:10px;
+align-items:center;
+flex-wrap:wrap;
+}
+
+.logo{color:#ff9900;font-weight:bold}
+
+button{
+background:#ff9900;
+border:none;
+padding:8px 12px;
+cursor:pointer;
+border-radius:5px;
+font-weight:bold;
+margin:2px;
+}
+
+input{
+padding:8px;
+width:100%;
+box-sizing:border-box;
+margin:5px 0;
+border-radius:5px;
+border:none;
+}
+
+.banner{
+background:linear-gradient(90deg,#ff9900,#ff6600);
+height:140px;
+display:flex;
+justify-content:center;
+align-items:center;
+color:white;
+font-size:26px;
+font-weight:bold;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:15px;
+padding:20px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+img{
+width:100%;
+height:140px;
+object-fit:cover;
+border-radius:6px;
+}
+
+/* MODAL */
+#modal{
+display:none;
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.92);
+justify-content:center;
+align-items:center;
+flex-direction:column;
+z-index:999;
+}
+
+.modalBox{
+position:relative;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+max-width:90%;
+max-height:90%;
+}
+
+#modalImg{
+max-width:90vw;
+max-height:80vh;
+object-fit:contain;
+transition:0.3s;
+}
+
+.modalBtns{
+margin-top:15px;
+display:flex;
+gap:10px;
+}
+
+.closeBtn{
+position:absolute;
+top:10px;
+right:10px;
+font-size:30px;
+color:white;
+cursor:pointer;
+z-index:10;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo">gun 2a/2b</div>
+
+<button onclick="openLogin()">🔐 Admin</button>
+<button onclick="openAdd()">➕ Ajouter</button>
+
+<button onclick="openCart()">🛒 <span id="cartCount">0</span></button>
+<button onclick="openFav()">❤ <span id="favCount">0</span></button>
+
+<button id="logoutBtn" onclick="logoutAdmin()" style="display:none;">
+🚪 Déconnexion admin
+</button>
+</header>
+
+<div class="banner">nos armes</div>
+
+<main id="products" class="grid"></main>
+
+<!-- MODAL -->
+<div id="modal">
+<div class="modalBox">
+
+<div class="closeBtn" onclick="closeModal()">✖</div>
+
+<img id="modalImg">
+
+<div class="modalBtns">
+<button onclick="rotateImg()">🔄 Tourner</button>
+<button onclick="closeModal()">Retour</button>
+</div>
+
+</div>
+</div>
+
+<script>
+
+let currentAngle = 0;
+
+/* PRODUITS */
+let products = JSON.parse(localStorage.getItem("products")) || [];
+
+if(products.length===0){
+products=[
+{
+id:1,
+title:"Produit 1",
+price:10,
+img:"https://via.placeholder.com/300x200?text=1",
+img2:"https://via.placeholder.com/300x200?text=1B",
+desc:"desc"
+},
+{
+id:2,
+title:"Produit 2",
+price:20,
+img:"https://via.placeholder.com/300x200?text=2",
+img2:"https://via.placeholder.com/300x200?text=2B",
+desc:"desc"
+}
+];
+save();
+}
+
+function save(){
+localStorage.setItem("products",JSON.stringify(products));
+}
+
+/* ETAT */
+let cart=[];
+let fav=[];
+let promo=false;
+
+/* RENDER */
+function render(){
+let c=document.getElementById("products");
+c.innerHTML="";
+
+products.forEach(p=>{
+c.innerHTML+=`
+<div class="card">
+
+<img src="${p.img}">
+
+<button style="width:100%;background:#808080;color:white;margin-top:5px;"
+onclick="openModal(${p.id})">
+📷 Plus de photos
+</button>
+
+<h3>${p.title}</h3>
+<p>${p.desc}</p>
+<h3>${p.price} €</h3>
+
+<button onclick="addCart(${p.id})">Ajouter</button>
+<button onclick="addFav(${p.id})">❤</button>
+
+</div>
+`;
+});
+}
+render();
+
+/* MODAL */
+function openModal(id){
+
+let p = products.find(x=>x.id===id);
+
+currentAngle = 0;
+
+document.getElementById("modalImg").src = p.img2 || p.img;
+document.getElementById("modalImg").style.transform = "rotate(0deg)";
+document.getElementById("modal").style.display = "flex";
+}
+
+function closeModal(){
+document.getElementById("modal").style.display="none";
+}
+
+function rotateImg(){
+currentAngle += 90;
+document.getElementById("modalImg").style.transform =
+`rotate(${currentAngle}deg)`;
+}
+
+/* PANIER */
+function addCart(id){
+cart.push(id);
+document.getElementById("cartCount").innerText=cart.length;
+}
+
+/* FAVORIS */
+function addFav(id){
+if(!fav.includes(id))fav.push(id);
+document.getElementById("favCount").innerText=fav.length;
+}
+
+/* ADMIN SIMPLE */
+const ADMIN_USER="admin_7X9K2";
+const ADMIN_PASS="P9m#4Qz8";
+
+let isAdmin=localStorage.getItem("isAdmin")==="true";
+
+function openLogin(){
+let u=prompt("ID admin:");
+let p=prompt("MDP:");
+
+if(u===ADMIN_USER && p===ADMIN_PASS){
+isAdmin=true;
+localStorage.setItem("isAdmin","true");
+alert("OK admin");
+}else alert("Erreur");
+}
+
+function logoutAdmin(){
+isAdmin=false;
+localStorage.removeItem("isAdmin");
+}
+
+</script>
+
+</body>
+</html>
